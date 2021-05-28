@@ -93,7 +93,9 @@ def generate_action(env, state_list, policy, action_bound):
 
         v, a, logprob, mean,all_attend_probs = policy(s_list, goal_list, speed_list, position_list,adj_list) #generate NaN???
         v, a, logprob = v.data.cpu().numpy(), a.data.cpu().numpy(), logprob.data.cpu().numpy()
+        a = a * 1.2 /0.0975
         scaled_action = np.clip(a, a_min=action_bound[0], a_max=action_bound[1])
+        # scaled_action = a
         #print('sssss',all_attend_probs)
     else:
         v = None

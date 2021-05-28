@@ -141,7 +141,7 @@ class CNNPolicy(nn.Module):
         a = F.leaky_relu(self.act_combine1(a))
         a = F.leaky_relu(self.act_combine2(a))
 
-        mean1 = torch.sigmoid(self.actor1(a))
+        mean1 = torch.tanh(self.actor1(a)) # sigmoid
         mean2 = torch.tanh(self.actor2(a))  # size:[n,1]
         mean = torch.cat((mean1, mean2), dim=-1)
 

@@ -404,3 +404,8 @@ class StageWorld():
                 break
         #print('POSITIONNNNNNNNN: ',self.init_pose,'dis_goal',dis_goal)
         return [x, y]
+
+
+
+
+

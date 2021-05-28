@@ -16,12 +16,23 @@ from torch.optim import Adam
 from collections import deque
 
 from model.net import CNNPolicy, SelectorNet
-from stage_world1 import StageWorld
+# from stage_world1 import StageWorld
+from webots_world1 import WebotsWorld
 from model.ppo import ppo_update_stage1, generate_train_data
 from model.ppo import generate_action
 from model.ppo import transform_buffer
 from model.dqn import get_influence_list, dqn_update1
-import datetime
+
+import argparse
+from controller import Supervisor
+import os
+
+import time
+import copy
+import tf
+
+
+
 
 # from tensorboardX import SummaryWriter
 # writer = SummaryWriter('runs/rewards')
@@ -41,7 +52,7 @@ BATCH_SIZE = 32  # Because I have changed the code, the total number of sample p
 EPOCH = 4
 COEFF_ENTROPY = 5e-4
 CLIP_VALUE = 0.1
-NUM_ENV = 8  # 24
+NUM_ENV = 8
 OBS_SIZE = 512
 ACT_SIZE = 2
 LEARNING_RATE = 5e-5
@@ -69,12 +80,6 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
 
     for id in range(MAX_EPISODES):  # refresh for a agent
         env.reset_pose()
-        # if id>0 and env.index == 0:
-        #     comm.bcast(position_list, root=0)
-        # elif id>0 :
-        #     print('ssss')
-        #     position_list = comm.bcast(None, root=0)
-        #     print(position_list)
         env.generate_goal_point()
         terminal = False
         ep_reward = 0
@@ -89,7 +94,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
         state = [obs_stack, goal, speed, position]
         # print('position',position,'local_goal',goal,'dist',np.sqrt(goal[0]**2+goal[1]**2))
 
-        while not terminal and not rospy.is_shutdown():
+        while not terminal and env.robot.step(100) != -1:
             state_list = comm.gather(state, root=0)
             # print state_list[0][3]
             position_list = comm.gather(position, root=0)
@@ -369,7 +374,17 @@ def get_random_list(robots_position, bandwidth=3):
     return adj_list  # size:[12*3]
 
 
+
+
 if __name__ == '__main__':
+
+
+    # config args
+    parser = argparse.ArgumentParser('Parse configuration file')
+    parser.add_argument('--mode', type=str, default='dqn',help='random, dqn, or random')
+    parser.add_argument('-nr','--NumRobots', type=int, required=True)
+    parser.add_argument('-np','--NumPedestrians', type=int, required=True)
+    sys_args = parser.parse_args()
 
     # config log
     hostname = socket.gethostname()
@@ -400,9 +415,14 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    env = StageWorld(512, index=rank, num_env=NUM_ENV)
+    # webots
+    robot_name = 'Robot' + str(comm_rank)
+    os.environ['WEBOTS_ROBOT_NAME'] = robot_name
+    robot = Supervisor()
+
+    env = WebotsWorld(512, index=rank, robot=robot, num_robot=sys_args.NumRobots, num_pedestrian=sys_args.NumPedestrians)
     reward = None
-    action_bound = [[0, -1], [1, 1]]
+    action_bound = [[-12.3, -12.3], [12.3, 12.3]]
 
     # torch.manual_seed(1)
     # np.random.seed(1)
@@ -462,12 +482,12 @@ if __name__ == '__main__':
         mse_selector = None
 
     try:
-        # mode = 'position'
-        mode = 'dqn'
-        # mode = 'random'
+        mode = sys_args.mode
         print('#################MODE: ', mode, '#######################')
         run(comm=comm, env=env, policy=policy, policy_path=policy_path, action_bound=action_bound, optimizer=opt,
             selector=selector, target_selector=target_selector, selector_optimizer=opt_selector,
             mse_selector=mse_selector, mode=mode)
     except KeyboardInterrupt:
         traceback.print_exc()
+
+

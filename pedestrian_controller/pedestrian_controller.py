@@ -33,7 +33,7 @@ class Pedestrian (Supervisor):
         self.speed = 1.15
         self.current_height_offset = 0
         self.joints_position_field = []
-        self.half_scenario_width = 6
+        self.half_scenario_width = 10
         self.joint_names = [
             "leftArmAngle", "leftLowerArmAngle", "leftHandAngle",
             "rightArmAngle", "rightLowerArmAngle", "rightHandAngle",

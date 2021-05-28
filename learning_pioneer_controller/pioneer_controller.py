@@ -11,8 +11,8 @@ rightMotor.setPosition(float('inf'))
 leftMotor.setVelocity(1/0.0975)
 rightMotor.setVelocity(1/0.0975)
 
-if name=="pioneer1":
-    lidar = robot.getLidar('lidar1')
+if name=="Robot0":
+    lidar = robot.getLidar('Lidar0')
     print('1111111111111111')
 else:
     lidar = robot.getLidar('lidar2')
@@ -21,13 +21,13 @@ lidar.enable(timestep)
 lidar.enablePointCloud()
 lidar.setFrequency(4)
 
-robot.getFromDef("pioneer1").getField("translation").setSFVec3f([0, 0, 5])
+robot.getFromDef("Robot0").getField("translation").setSFVec3f([0, 0, 5])
 
 
 while robot.step(timestep) != -1:
     info = lidar.getRangeImage()
-    # print(info)
-    if name=="pioneer1":
+    print(info)
+    if name=="Robot0":
         print('ssss')
         position = robot.getFromDef("pioneer1").getPosition()
         # robot.getFromDef("pioneer1").getField("translation").setSFVec3f([0, 0, 0])

@@ -111,6 +111,9 @@ def dqn_update(selector, selector_optimizer,mse_selector, batch_size, memory, fi
         # print(sample_dones.shape)
         # print(sample_adjs.shape)
         # print('------------')
+        if len(sample_last_q.shape) == 1:
+            sample_last_q = sample_last_q.unsqueeze(-1)
+            sample_last_q = sample_last_q.unsqueeze(-1)
         target_q = sampled_rewards + 0.90 * sample_last_q * sample_dones
 
         for this_filter in this_filter_index:
@@ -173,6 +176,9 @@ def dqn_update1(selector, selector_optimizer,mse_selector, batch_size, memory,  
         # print(sample_dones.shape)
         # print(sample_adjs.shape)
         # print('------------')
+        if len(sample_last_q.shape) == 1:
+            sample_last_q = sample_last_q.unsqueeze(-1)
+            sample_last_q = sample_last_q.unsqueeze(-1)
         target_q = sampled_rewards + 0.90 * sample_last_q * sample_dones
         eval_q_tensor = eval_q_tensor.view(-1,1)
         target_q = target_q.view(-1, 1)
