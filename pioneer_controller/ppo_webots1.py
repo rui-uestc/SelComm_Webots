@@ -17,7 +17,7 @@ from collections import deque
 
 from model.net import CNNPolicy, SelectorNet
 # from stage_world1 import StageWorld
-from webots_world1 import WebotsWorld
+from model.webots_world1 import WebotsWorld
 from model.ppo import ppo_update_stage1, generate_train_data
 from model.ppo import generate_action
 from model.ppo import transform_buffer
@@ -75,8 +75,10 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
     dvn_update_count = 0
     global_step = 0
 
+
     if env.index == 0:
         env.reset_world()
+
 
     for id in range(MAX_EPISODES):  # refresh for a agent
         env.reset_pose()
@@ -94,11 +96,12 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
         state = [obs_stack, goal, speed, position]
         # print('position',position,'local_goal',goal,'dist',np.sqrt(goal[0]**2+goal[1]**2))
 
-        while not terminal and env.robot.step(100) != -1:
-            state_list = comm.gather(state, root=0)
+
+        # print(env.index, 'robot.step()', env.robot.step(1))
+        while not terminal and robot.step(100) != -1:  # crashed one !!!!!!
+            state_list = comm.gather(state, root=0) # not crashed one !!!!!!!
             # print state_list[0][3]
             position_list = comm.gather(position, root=0)
-            # print('sssss',position)
             if env.index == 0:
                 if mode is 'position':
                     adj_list = get_adjacency_list(position_list, bandwidth=BANDWIDTH)
@@ -151,14 +154,13 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             Only robot whose rank==0 has the state_list which contains other's message. Messages in other robots is Nonef
             Robot 0 plays a role of central node.
             '''
+
             v, a, logprob, scaled_action, all_attend_probs = generate_action(env=env, state_list=state_list,
                                                                              policy=policy, action_bound=action_bound)
             # print(all_attend_probs) #12*12 dig0 matrix   axis=1 means the weights
-
             # execute actions
             real_action = comm.scatter(scaled_action, root=0)
             env.control_vel(real_action)
-
             # rate.sleep()
             rospy.sleep(0.001)
 
@@ -225,37 +227,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             '''
 
             terminal_list = comm.gather(terminal, root=0)
-            '''
-            if env.index == 0: # index is initialized by rank
-                buff.append((state_list, a, r_list, terminal_list, logprob, v))
-                if len(buff) > HORIZON - 1:
-                    s_batch, goal_batch, speed_batch, position_batch,adj_batch, a_batch, r_batch, d_batch, l_batch, v_batch = \
-                        transform_buffer(buff=buff)
-                    t_batch, advs_batch = generate_train_data(rewards=r_batch, gamma=GAMMA, values=v_batch,
-                                                              last_value=last_v, dones=d_batch, lam=LAMDA)
-                    memory = (s_batch, goal_batch, speed_batch, position_batch,adj_batch, a_batch, l_batch, t_batch, v_batch, r_batch, advs_batch)
-                    ppo_update_stage1(policy=policy, optimizer=optimizer, batch_size=BATCH_SIZE, memory=memory,
-                                            epoch=EPOCH, coeff_entropy=COEFF_ENTROPY, clip_value=CLIP_VALUE, num_step=HORIZON,
-                                            num_env=NUM_ENV, frames=LASER_HIST,
-                                            obs_size=OBS_SIZE, act_size=ACT_SIZE, global_update = global_update)
-                    #  For Network debug
-                    # act_fea_cv1params = policy.state_dict()['act_fea_cv1.weight']
-                    # actor1params =  policy.state_dict()['actor1.weight']
-                    # queryparams = policy.state_dict()['query.bias'][0]
-                    # keyparams = policy.state_dict()['key.bias'][0]
-                    # valueparams = policy.state_dict()['value.bias'][0]
-                    # act_fc3params =  policy.state_dict()['act_fc3.bias']
-                    # writer.add_scalar('query.bias',queryparams,global_step=global_update)
-                    # writer.add_scalar('key.bias', keyparams, global_step=global_update)
-                    # writer.add_scalar('value.bias', valueparams, global_step=global_update)
-                    # writer.add_scalar('act_fea_cv1.weight', act_fea_cv1params[0][0][0], global_step=global_update)
-                    # writer.add_scalar('actor1.weight', actor1params[0][0], global_step=global_update)
-                    # writer.add_scalar('act_fc3.weight', act_fc3params[0], global_step=global_update)
 
-
-                    buff = []
-                    global_update += 1
-            '''
             if env.index == 0:
                 is_update = False
                 buff.append((state_list, a, r_list, terminal_list, logprob, v, next_q))
@@ -305,6 +277,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             state = state_next
             position = position_next
 
+
             if step % STAY_SELECTOR == 0:
                 dqn_reward = 0
 
@@ -318,8 +291,9 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
 
         drift = np.sqrt((env.goal_point[0] - env.init_pose[0]) ** 2 + (env.goal_point[1] - env.init_pose[1]) ** 2)
 
+
         if step > 1:
-            logger.info('Env %02d, Goal (%05.1f, %05.1f), Episode %05d, Step %03d, Reward %-5.1f, Drift %05.1f, %s' % \
+            logger.info('Robot %02d, Goal (%05.1f, %05.1f), Episode %05d, Step %03d, Reward %-5.1f, Drift %05.1f, %s' % \
                         (env.index, env.goal_point[0], env.goal_point[1], id + 1, step, ep_reward, drift, result))
             logger_cal.info(ep_reward)
 
@@ -422,7 +396,7 @@ if __name__ == '__main__':
 
     env = WebotsWorld(512, index=rank, robot=robot, num_robot=sys_args.NumRobots, num_pedestrian=sys_args.NumPedestrians)
     reward = None
-    action_bound = [[-12.3, -12.3], [12.3, 12.3]]
+    action_bound = [[0, 0], [0.85/0.0975, 0.85/0.0975]]
 
     # torch.manual_seed(1)
     # np.random.seed(1)

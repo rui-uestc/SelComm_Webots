@@ -73,7 +73,7 @@ class Pedestrian (Supervisor):
             # print("The trajectory shoulld have at least 2 points.")
             # return
         # if options.speed and options.speed > 0:
-        self.speed = 0.7+random.random() * 0.5
+        self.speed = 0.4
         # print(self.speed)
         if options.step and options.step > 0:
             self.time_step = options.step

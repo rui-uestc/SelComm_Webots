@@ -28,34 +28,36 @@ lidar.enable(timestep)
 lidar.enablePointCloud()
 lidar.setFrequency(4)
 
+robot.getFromDef("Robot0").getField("translation").setSFVec3f([2, 2, 2])
+robot.step(1)
 
 print('sss',timestep)
 
-while robot.step(1000) != -1:
-    info = lidar.getRangeImage()
-    info = np.array(info)
-    print(len(info))
-    if name=="Robot0":
-        # print('ssss')
-        position0 = robot.getFromDef("Robot0").getPosition()
-        rotation = robot.getFromDef("Robot0").getField("rotation").getSFRotation()
-        print('position0', position0)
-        velocity = leftMotor.getVelocity()
-        # position1 = robot.getFromDef("Robot1").getPosition()
-        # print('position1:', position1)
-        #
-        # position_Pedestrian0 = robot.getFromDef("Pedestrian0").getPosition()
-        # print('Pedestrian0:', position_Pedestrian0)
-
-        # print(velocity)
-        # robot.getFromDef("pioneer1").getField("translation").setSFVec3f([0, 0, 0])
-    else:
-        position = robot.getFromDef("pioneer2").getPosition()
-        velocity = leftMotor.getVelocity()
-        robot.getFromDef("Robot0").getField("rotation").setSFRotation([0, 1, 0, 0])
-        robot.step(1)
-        # robot.getFromDef("robot-1").getField("translation").setSFVec3f([-0.2, 0, 0])
-        # print(velocity)
-    # print(position)
-    pass
+# while robot.step(1000) != -1:
+#     info = lidar.getRangeImage()
+#     info = np.array(info)
+#     print(len(info))
+#     if name=="Robot0":
+#         # print('ssss')
+#         position0 = robot.getFromDef("Robot0").getPosition()
+#         rotation = robot.getFromDef("Robot0").getField("rotation").getSFRotation()
+#         print('position0', position0)
+#         velocity = leftMotor.getVelocity()
+#         # position1 = robot.getFromDef("Robot1").getPosition()
+#         # print('position1:', position1)
+#         #
+#         # position_Pedestrian0 = robot.getFromDef("Pedestrian0").getPosition()
+#         # print('Pedestrian0:', position_Pedestrian0)
+#
+#         # print(velocity)
+#         # robot.getFromDef("pioneer1").getField("translation").setSFVec3f([0, 0, 0])
+#     else:
+#         position = robot.getFromDef("pioneer2").getPosition()
+#         velocity = leftMotor.getVelocity()
+#         robot.getFromDef("Robot0").getField("rotation").setSFRotation([0, 1, 0, 0])
+#         robot.step(1)
+#         # robot.getFromDef("robot-1").getField("translation").setSFVec3f([-0.2, 0, 0])
+#         # print(velocity)
+#     # print(position)
+#     pass
 

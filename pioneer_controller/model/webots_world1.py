@@ -128,11 +128,11 @@ class WebotsWorld():
     #     self.is_crashed = flag.data
 
     def get_self_stateGT(self):
-        Quaternious = self.robot.getFromDef("Robot0").getField("rotation").getSFRotation()
+        Quaternious = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
         Euler = tf.transformations.euler_from_quaternion([Quaternious[1], Quaternious[2], Quaternious[3], Quaternious[0]])
         # self.state_GT = [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef("Robot0").getPosition()[2], Euler[2]]
         # return self.state_GT
-        return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef("Robot0").getPosition()[2], Euler[2]]
+        return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef(self.robot_name).getPosition()[2], Euler[2]]
 
     def get_self_speedGT(self):
         # self.speed_GT = [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
@@ -179,6 +179,7 @@ class WebotsWorld():
             dx = position[0] - other[0]
             dy = position[1] - other[1]
             dist = (dx ** 2 + dy ** 2) ** (1 / 2) - self.robot_radius - self.robot_radius - safe_distance
+            # print(position, other,dist)
             if dist < 0:
                 is_crashed = True
                 return is_crashed
@@ -202,7 +203,7 @@ class WebotsWorld():
             if i != self.index:
                 robots_name.append('Robot'+str(i))
         for robot in robots_name:
-            robots_position.append([self.robot.getFromDef(robot).getPosition()[0],self.robot.getFromDef(robot).getPosition()[1]])
+            robots_position.append([self.robot.getFromDef(robot).getPosition()[0],self.robot.getFromDef(robot).getPosition()[2]])
         return robots_position
 
     def get_pedestrians_position(self):
@@ -211,7 +212,7 @@ class WebotsWorld():
         for i in range(self.num_pedestrian):
             pedestrians_name.append('Pedestrian'+str(i))
         for pedestrian in pedestrians_name:
-            pedestrians_position.append([self.robot.getFromDef(pedestrian).getPosition()[0],self.robot.getFromDef(pedestrian).getPosition()[1]])
+            pedestrians_position.append([self.robot.getFromDef(pedestrian).getPosition()[0],self.robot.getFromDef(pedestrian).getPosition()[2]])
         return pedestrians_position
 
 
@@ -271,24 +272,29 @@ class WebotsWorld():
         if np.abs(w) >  1.05:
             reward_w = -0.1 * np.abs(w)
 
-        if t > 160:
+        if t > 170:
             terminate = True
             result = 'Time out'
+        print(reward_g, reward_c, reward_w)
         reward = reward_g + reward_c + reward_w
 
         return reward, terminate, result
 
     def reset_pose(self):
         random_pose = self.generate_random_pose()
-        self.control_pose(random_pose)
-        [x_robot, y_robot, theta] = self.get_self_stateGT()
-        self.robot.step(1)
+        self.control_pose(random_pose)  #!!!!!!!!
+        # [x_robot, y_robot, theta] = self.get_self_stateGT()
+        # # self.robot.step(1)
+        #
+        #
+        # # start_time = time.time()
+        # while np.abs(random_pose[0] - x_robot) > 0.2 or np.abs(random_pose[1] - y_robot) > 0.2:
+        #     [x_robot, y_robot, theta] = self.get_self_stateGT()
+        #     self.control_pose(random_pose)
+        #     print('ssssss', self.index)
+        #     self.robot.step(1)
+        #     print('ssssss', self.index)
 
-        # start_time = time.time()
-        while np.abs(random_pose[0] - x_robot) > 0.2 or np.abs(random_pose[1] - y_robot) > 0.2:
-            [x_robot, y_robot, theta] = self.get_self_stateGT()
-            self.control_pose(random_pose)
-            self.robot.step(1)
 
 
 
@@ -324,11 +330,10 @@ class WebotsWorld():
         # pose_cmd.orientation.z = qtn[2]
         # pose_cmd.orientation.w = qtn[3]   # using quaternion to represent orientation
         # self.cmd_pose.publish(pose_cmd)
-
         self.robot.getFromDef(self.robot_name).getField("translation").setSFVec3f([pose[0], 0.0949247, pose[1]])
         qtn = tf.transformations.quaternion_from_euler(0, 0, pose[2], 'rxyz')
         self.robot.getFromDef(self.robot_name).getField("rotation").setSFRotation([qtn[3], qtn[0], qtn[1], qtn[2]])
-        self.robot.step(1)
+        # self.robot.step(1)
 
     def generate_random_pose(self):
         near_obstacle = True
