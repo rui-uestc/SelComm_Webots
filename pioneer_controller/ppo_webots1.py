@@ -28,9 +28,7 @@ from controller import Supervisor
 import os
 
 import time
-import copy
-import tf
-
+import subprocess
 
 
 
@@ -41,6 +39,13 @@ import tf
 comm = MPI.COMM_WORLD
 comm_rank = comm.Get_rank()
 comm_size = comm.Get_size()
+
+if comm_rank == 0:
+    command1 = subprocess.Popen(["killall", "/usr/local/webots/bin/webots-bin"])
+    command2 = subprocess.Popen(['webots','--minimize'])
+
+
+time.sleep(3)
 
 MAX_EPISODES = 50000
 LASER_BEAM = 512
@@ -79,12 +84,17 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
     if env.index == 0:
         env.reset_world()
 
-
+    # t1 = 0
     for id in range(MAX_EPISODES):  # refresh for a agent
+
+
         env.reset_pose()
         env.generate_goal_point()
         terminal = False
         ep_reward = 0
+        all_r1 = 0
+        all_r2 = 0
+        all_r3 = 0
         step = 0
         dqn_reward = 0
 
@@ -96,9 +106,12 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
         state = [obs_stack, goal, speed, position]
         # print('position',position,'local_goal',goal,'dist',np.sqrt(goal[0]**2+goal[1]**2))
 
-
         # print(env.index, 'robot.step()', env.robot.step(1))
-        while not terminal and robot.step(100) != -1:  # crashed one !!!!!!
+        while not terminal and robot.step(150) != -1:  # crashed one !!!!!!
+            # if env.index == 0:
+            #     return2 = command2.terminate()
+            # print(int(round(time.time() * 1000)) - t1)
+            # t1 = int(round(time.time() * 1000))
             state_list = comm.gather(state, root=0) # not crashed one !!!!!!!
             # print state_list[0][3]
             position_list = comm.gather(position, root=0)
@@ -165,8 +178,11 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             rospy.sleep(0.001)
 
             # get informtion
-            r, terminal, result = env.get_reward_and_terminate(step)
+            r, terminal, result,r1,r2,r3 = env.get_reward_and_terminate(step)
             ep_reward += r
+            all_r1 += r1
+            all_r2 += r2
+            all_r3 += r3
             global_step += 1
             dqn_reward += r
 
@@ -283,11 +299,17 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
 
         if env.index == 0:
             if global_update != 0 and global_update % 20 == 0:
-                torch.save(policy.state_dict(), policy_path + '/Stage1_{}.pth'.format(global_update))
+                torch.save(policy.state_dict(), policy_path + '/{}.pth'.format(time.time()))
                 if mode is 'dqn':
-                    torch.save(selector.state_dict(), policy_path + '/dqn_stage2_{}.pth'.format(global_update))
+                    torch.save(selector.state_dict(), policy_path + '/dqn_{}.pth'.format(time.time()))
+
+                torch.save(policy.state_dict(), policy_path + '/best.pth')
+                if mode is 'dqn':
+                    torch.save(selector.state_dict(), policy_path + '/dqn_best.pth')
                 logger.info('########################## model saved when update {} times#########'
                             '################'.format(global_update))
+
+                return2 = command2.terminate()
 
         drift = np.sqrt((env.goal_point[0] - env.init_pose[0]) ** 2 + (env.goal_point[1] - env.init_pose[1]) ** 2)
 
@@ -296,6 +318,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             logger.info('Robot %02d, Goal (%05.1f, %05.1f), Episode %05d, Step %03d, Reward %-5.1f, Drift %05.1f, %s' % \
                         (env.index, env.goal_point[0], env.goal_point[1], id + 1, step, ep_reward, drift, result))
             logger_cal.info(ep_reward)
+            print(all_r1,all_r2,all_r3)
 
         # if env.index == 0:
         #     writer.add_scalar('reward of robot 0',ep_reward,global_step=global_update)
@@ -418,7 +441,7 @@ if __name__ == '__main__':
         if not os.path.exists(policy_path):
             os.makedirs(policy_path)
 
-        file = policy_path + '/stage2_1620.pth'
+        file = policy_path + '/best.pth'
         if os.path.exists(file):
             logger.info('####################################')
             logger.info('############Loading Model###########')
@@ -430,7 +453,7 @@ if __name__ == '__main__':
             logger.info('############Start Training###########')
             logger.info('#####################################')
 
-        file_dqn = policy_path + '/dqn_stage2_1620.pth'
+        file_dqn = policy_path + '/dqn_best.pth'
         if os.path.exists(file_dqn):
             logger.info('####################################')
             logger.info('############Loading DQN Model###########')

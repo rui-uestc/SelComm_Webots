@@ -137,7 +137,9 @@ class WebotsWorld():
     def get_self_speedGT(self):
         # self.speed_GT = [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
         # return self.speed_GT
-        return [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
+        v_left = self.leftMotor.getVelocity() * 0.0975
+        v_right = self.rightMotor.getVelocity() * 0.0975
+        return [(v_left + v_right)/2, (v_right - v_left)/0.16]
 
     def get_laser_observation(self):
         scan = self.lidar.getRangeImage()
@@ -272,13 +274,12 @@ class WebotsWorld():
         if np.abs(w) >  1.05:
             reward_w = -0.1 * np.abs(w)
 
-        if t > 170:
+        if t > 160:
             terminate = True
             result = 'Time out'
-        print(reward_g, reward_c, reward_w)
         reward = reward_g + reward_c + reward_w
 
-        return reward, terminate, result
+        return reward, terminate, result, reward_g, reward_c, reward_w
 
     def reset_pose(self):
         random_pose = self.generate_random_pose()
