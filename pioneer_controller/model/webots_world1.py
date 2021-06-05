@@ -3,7 +3,13 @@ import copy
 import tf
 import numpy as np
 
+# Pioneer
+WHEELS_DISTANCE = 0.33
+WHEEL_RADIUS = 0.0975
 
+# Turtlebot3 Burge
+# WHEELS_DISTANCE = 0.16
+# WHEEL_RADIUS = 0.033
 
 
 class WebotsWorld():
@@ -58,74 +64,6 @@ class WebotsWorld():
         self.lidar.enablePointCloud()
         self.lidar.setFrequency(4)
 
-        # # -----------Publisher and Subscriber-------------
-        # cmd_vel_topic = 'robot_' + str(index) + '/cmd_vel'
-        # self.cmd_vel = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
-        #
-        # cmd_pose_topic = 'robot_' + str(index) + '/cmd_pose'
-        # self.cmd_pose = rospy.Publisher(cmd_pose_topic, Pose, queue_size=2)
-        #
-        # object_state_topic = 'robot_' + str(index) + '/base_pose_ground_truth'
-        # self.object_state_sub = rospy.Subscriber(object_state_topic, Odometry, self.ground_truth_callback)
-        #
-        # laser_topic = 'robot_' + str(index) + '/base_scan'
-        #
-        # self.laser_sub = rospy.Subscriber(laser_topic, LaserScan, self.laser_scan_callback)
-        #
-        # odom_topic = 'robot_' + str(index) + '/odom'
-        # self.odom_sub = rospy.Subscriber(odom_topic, Odometry, self.odometry_callback)
-        #
-        # crash_topic = 'robot_' + str(index) + '/is_crashed'
-        # self.check_crash = rospy.Subscriber(crash_topic, Int8, self.crash_callback)
-        #
-        #
-        # self.sim_clock = rospy.Subscriber('clock', Clock, self.sim_clock_callback)
-        #
-        # # -----------Service-------------------
-        # self.reset_stage = rospy.ServiceProxy('reset_positions', Empty)
-
-
-        # # Wait until the first callback
-        # self.speed = None
-        # self.state = None
-        # self.speed_GT = None
-        # self.state_GT = None
-        # while self.scan is None or self.speed is None or self.state is None\
-        #         or self.speed_GT is None or self.state_GT is None:
-        #     pass
-
-        # rospy.sleep(1.)
-        # # What function to call when you ctrl + c
-        # rospy.on_shutdown(self.shutdown)
-
-
-    # def ground_truth_callback(self, GT_odometry):
-    #     Quaternious = GT_odometry.pose.pose.orientation
-    #     Euler = tf.transformations.euler_from_quaternion([Quaternious.x, Quaternious.y, Quaternious.z, Quaternious.w])
-    #     self.state_GT = [GT_odometry.pose.pose.position.x, GT_odometry.pose.pose.position.y, Euler[2]]
-    #     v_x = GT_odometry.twist.twist.linear.x
-    #     v_y = GT_odometry.twist.twist.linear.y
-    #     v = np.sqrt(v_x**2 + v_y**2)
-    #     self.speed_GT = [v, GT_odometry.twist.twist.angular.z]
-    #
-    # def laser_scan_callback(self, scan):
-    #     self.scan_param = [scan.angle_min, scan.angle_max, scan.angle_increment, scan.time_increment,
-    #                        scan.scan_time, scan.range_min, scan.range_max]
-    #     self.scan = np.array(scan.ranges)
-    #     self.laser_cb_num += 1
-    #
-    #
-    # def odometry_callback(self, odometry):
-    #     Quaternions = odometry.pose.pose.orientation
-    #     Euler = tf.transformations.euler_from_quaternion([Quaternions.x, Quaternions.y, Quaternions.z, Quaternions.w])
-    #     self.state = [odometry.pose.pose.position.x, odometry.pose.pose.position.y, Euler[2]]
-    #     self.speed = [odometry.twist.twist.linear.x, odometry.twist.twist.angular.z]
-    #
-    # def sim_clock_callback(self, clock):
-    #     self.sim_time = clock.clock.secs + clock.clock.nsecs / 1000000000.
-    #
-    # def crash_callback(self, flag):
-    #     self.is_crashed = flag.data
 
     def get_self_stateGT(self):
         Quaternious = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
@@ -137,9 +75,9 @@ class WebotsWorld():
     def get_self_speedGT(self):
         # self.speed_GT = [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
         # return self.speed_GT
-        v_left = self.leftMotor.getVelocity() * 0.0975
-        v_right = self.rightMotor.getVelocity() * 0.0975
-        return [(v_left + v_right)/2, (v_right - v_left)/0.16]
+        v_left = self.leftMotor.getVelocity() * WHEEL_RADIUS
+        v_right = self.rightMotor.getVelocity() * WHEEL_RADIUS
+        return [(v_left + v_right)/2, (v_right - v_left)/WHEELS_DISTANCE]
 
     def get_laser_observation(self):
         scan = self.lidar.getRangeImage()
@@ -160,11 +98,14 @@ class WebotsWorld():
             sparse_scan_right.append(scan[int(index)])
             index -= step
         scan_sparse = np.concatenate((sparse_scan_left, sparse_scan_right[::-1]), axis=0)
+        # print(scan_sparse / 6.0 - 0.5)
         return scan_sparse / 6.0 - 0.5
 
 
     def get_self_speed(self):
-        return [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
+        v_left = self.leftMotor.getVelocity() * WHEEL_RADIUS
+        v_right = self.rightMotor.getVelocity() * WHEEL_RADIUS
+        return [(v_left + v_right) / 2, (v_right - v_left) / WHEELS_DISTANCE]
 
     # def get_self_state(self):
     #     Quaternious = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
@@ -237,7 +178,32 @@ class WebotsWorld():
         self.step_r_cnt = 0.
         self.start_time = time.time()
 
-
+    def draw_rects(self, coords):
+        for i, goal in enumerate(coords):
+            exisiting_goal = self.robot.getFromDef("GOAL_{}".format(self.index))
+            if not exisiting_goal is None:
+                exisiting_goal.remove()
+            # print(goal)
+            x, z = goal
+            goal_string = """
+                    DEF GOAL_%d Shape{
+                        appearance Appearance{
+                            material Material {
+                                diffuseColor 0 1 0
+                                emissiveColor 0 1 0
+                            }
+                        }
+                        geometry DEF GOAL_FACE_SET IndexedFaceSet {
+                            coord Coordinate {
+                                point [ %f 0.05 %f, %f 0.05 %f, %f 0.05 %f, %f 0.05 %f ]
+                            }
+                            coordIndex [ 3 2 1 0 -1]
+                        }
+                        isPickable FALSE
+                    }
+                    """ % (self.index, x - 0.05, z - 0.05, x + 0.05, z - 0.05, x + 0.05, z + 0.05, x - 0.05, z + 0.05)
+            self.robot.getRoot().getField("children").importMFNodeFromString(-1, goal_string)
+            # self.robot.step(1)
 
     def generate_goal_point(self):
         [x_g, y_g] = self.generate_random_goal()
@@ -246,6 +212,8 @@ class WebotsWorld():
 
         self.pre_distance = np.sqrt(x ** 2 + y ** 2)
         self.distance = copy.deepcopy(self.pre_distance)
+        self.draw_rects(coords=[self.goal_point])
+
 
 
     def get_reward_and_terminate(self, t):
@@ -274,12 +242,12 @@ class WebotsWorld():
         if np.abs(w) >  1.05:
             reward_w = -0.1 * np.abs(w)
 
-        if t > 160:
+        if t > 150:
             terminate = True
             result = 'Time out'
         reward = reward_g + reward_c + reward_w
 
-        return reward, terminate, result, reward_g, reward_c, reward_w
+        return reward, terminate, result
 
     def reset_pose(self):
         random_pose = self.generate_random_pose()
@@ -300,21 +268,17 @@ class WebotsWorld():
 
 
     def control_vel(self, action):
-        # move_cmd = Twist()
-        # move_cmd.linear.x = action[0]
-        # move_cmd.linear.y = 0.
-        # move_cmd.linear.z = 0.
-        # move_cmd.angular.x = 0.
-        # move_cmd.angular.y = 0.
-        # move_cmd.angular.z = action[1]
-        # self.cmd_vel.publish(move_cmd)
+        v_left = action[0] - (action[1] * WHEELS_DISTANCE) / 2.0
+        v_right = action[0] + (action[1] * WHEELS_DISTANCE) / 2.0
         leftMotor = self.robot.getMotor('left wheel')
         rightMotor = self.robot.getMotor('right wheel')
+        # print('wheel speed',v_left, v_right)
         leftMotor.setPosition(float('inf'))
         rightMotor.setPosition(float('inf'))
-        leftMotor.setVelocity(action[0])
-        rightMotor.setVelocity(action[1])
+        leftMotor.setVelocity(v_left / WHEEL_RADIUS)
+        rightMotor.setVelocity(v_right / WHEEL_RADIUS)
         self.robot.step(1)
+
 
 
 

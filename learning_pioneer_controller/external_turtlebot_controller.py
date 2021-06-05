@@ -8,15 +8,16 @@ os.environ['WEBOTS_ROBOT_NAME'] = 'Robot0'
 robot = Supervisor()
 name = robot.getName()
 timestep = int(robot.getBasicTimeStep())  # ms, default = 32
+print(name)
 
 
 
-leftMotor = robot.getMotor('left wheel')
-rightMotor = robot.getMotor('right wheel')
+leftMotor = robot.getMotor('left wheel motor')
+rightMotor = robot.getMotor('right wheel motor')
 leftMotor.setPosition(float('inf'))
 rightMotor.setPosition(float('inf'))
-leftMotor.setVelocity(-1/0.0975) #1/0.0975
-rightMotor.setVelocity(1/0.0975)
+leftMotor.setVelocity(-6.66) #1/0.0975
+rightMotor.setVelocity(6.66)
 
 if name=="Robot0":
     lidar = robot.getLidar('Lidar0')
@@ -31,11 +32,13 @@ lidar.setFrequency(4)
 # robot.getFromDef("Robot0").getField("translation").setSFVec3f([2, 2, 2])
 robot.step(1)
 
-# print('sss',lidar.getRangeImage())
+
+# robot.getFromDef('Robot0').getField("translation").setSFVec3f([1, 0.0949247, 1])
 
 while robot.step(100) != -1:
     info = lidar.getRangeImage()
     info = np.array(info)
+    print(len(info))
     print(info)
 #     if name=="Robot0":
 #         # print('ssss')

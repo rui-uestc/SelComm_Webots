@@ -107,7 +107,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
         # print('position',position,'local_goal',goal,'dist',np.sqrt(goal[0]**2+goal[1]**2))
 
         # print(env.index, 'robot.step()', env.robot.step(1))
-        while not terminal and robot.step(150) != -1:  # crashed one !!!!!!
+        while not terminal and robot.step(100) != -1:  # crashed one !!!!!!
             # if env.index == 0:
             #     return2 = command2.terminate()
             # print(int(round(time.time() * 1000)) - t1)
@@ -178,11 +178,8 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             rospy.sleep(0.001)
 
             # get informtion
-            r, terminal, result,r1,r2,r3 = env.get_reward_and_terminate(step)
+            r, terminal, result = env.get_reward_and_terminate(step)
             ep_reward += r
-            all_r1 += r1
-            all_r2 += r2
-            all_r3 += r3
             global_step += 1
             dqn_reward += r
 
@@ -271,10 +268,10 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
                     memory = (
                     s_batch, goal_batch, speed_batch, position_batch, adj_batch, a_batch, l_batch, t_batch, v_batch,
                     r_batch, advs_batch, next_q_batch, d_batch)
-                    ppo_update_stage1(policy=policy, optimizer=optimizer, batch_size=BATCH_SIZE, memory=memory,
-                                      epoch=EPOCH, coeff_entropy=COEFF_ENTROPY, clip_value=CLIP_VALUE, num_step=HORIZON,
-                                      num_env=NUM_ENV, frames=LASER_HIST,
-                                      obs_size=OBS_SIZE, act_size=ACT_SIZE, global_update=global_update)
+                    # ppo_update_stage1(policy=policy, optimizer=optimizer, batch_size=BATCH_SIZE, memory=memory,
+                    #                   epoch=EPOCH, coeff_entropy=COEFF_ENTROPY, clip_value=CLIP_VALUE, num_step=HORIZON,
+                    #                   num_env=NUM_ENV, frames=LASER_HIST,
+                    #                   obs_size=OBS_SIZE, act_size=ACT_SIZE, global_update=global_update)
                     is_update = True
 
                     buff = []
@@ -283,8 +280,8 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
                     s_batch, goal_batch, speed_batch, position_batch, adj_batch, a_batch, r_batch, d_batch, l_batch, v_batch, next_q_batch = \
                         transform_buffer(buff=dqn_buff)
                     dqn_memory = (s_batch, goal_batch, speed_batch, position_batch, r_batch, next_q_batch, d_batch)
-                    dqn_update1(selector=selector, selector_optimizer=selector_optimizer, mse_selector=mse_selector,
-                                batch_size=BATCH_SIZE, memory=dqn_memory)
+                    # dqn_update1(selector=selector, selector_optimizer=selector_optimizer, mse_selector=mse_selector,
+                    #             batch_size=BATCH_SIZE, memory=dqn_memory)
                     dvn_update_count += 1
                     if dvn_update_count % V_NETWORK_ITERATION == 0:
                         target_selector.load_state_dict(selector.state_dict())
@@ -318,7 +315,6 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             logger.info('Robot %02d, Goal (%05.1f, %05.1f), Episode %05d, Step %03d, Reward %-5.1f, Drift %05.1f, %s' % \
                         (env.index, env.goal_point[0], env.goal_point[1], id + 1, step, ep_reward, drift, result))
             logger_cal.info(ep_reward)
-            print(all_r1,all_r2,all_r3)
 
         # if env.index == 0:
         #     writer.add_scalar('reward of robot 0',ep_reward,global_step=global_update)
@@ -419,7 +415,8 @@ if __name__ == '__main__':
 
     env = WebotsWorld(512, index=rank, robot=robot, num_robot=sys_args.NumRobots, num_pedestrian=sys_args.NumPedestrians)
     reward = None
-    action_bound = [[0, 0], [0.85/0.0975, 0.85/0.0975]]
+
+    action_bound = [[0, -1], [1, 1]]
 
     # torch.manual_seed(1)
     # np.random.seed(1)
@@ -441,7 +438,8 @@ if __name__ == '__main__':
         if not os.path.exists(policy_path):
             os.makedirs(policy_path)
 
-        file = policy_path + '/best.pth'
+        # file = policy_path + '/best.pth'
+        file = policy_path + '/1a.pth'
         if os.path.exists(file):
             logger.info('####################################')
             logger.info('############Loading Model###########')
@@ -453,7 +451,7 @@ if __name__ == '__main__':
             logger.info('############Start Training###########')
             logger.info('#####################################')
 
-        file_dqn = policy_path + '/dqn_best.pth'
+        file_dqn = policy_path + '/1a_dqn.pth'
         if os.path.exists(file_dqn):
             logger.info('####################################')
             logger.info('############Loading DQN Model###########')
