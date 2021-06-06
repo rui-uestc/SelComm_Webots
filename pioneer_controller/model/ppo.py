@@ -97,7 +97,7 @@ def generate_action(env, state_list, policy, action_bound):
         # a = vx, vz  ->  v_left,v_right
         scaled_action = np.clip(a, a_min=action_bound[0], a_max=action_bound[1])
         # print(a,scaled_action)
-
+        # print('-------------------')
         '''tansfer to wheel action
         a_wheel = []
         for action in a:

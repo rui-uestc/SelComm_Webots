@@ -16,8 +16,8 @@ leftMotor = robot.getMotor('left wheel motor')
 rightMotor = robot.getMotor('right wheel motor')
 leftMotor.setPosition(float('inf'))
 rightMotor.setPosition(float('inf'))
-leftMotor.setVelocity(-6.66) #1/0.0975
-rightMotor.setVelocity(6.66)
+leftMotor.setVelocity(5) #1/0.0975
+rightMotor.setVelocity(5)
 
 if name=="Robot0":
     lidar = robot.getLidar('Lidar0')

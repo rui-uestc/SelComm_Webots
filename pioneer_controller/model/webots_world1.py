@@ -4,12 +4,19 @@ import tf
 import numpy as np
 
 # Pioneer
-WHEELS_DISTANCE = 0.33
-WHEEL_RADIUS = 0.0975
+# WHEELS_DISTANCE = 0.33
+# WHEEL_RADIUS = 0.0975
+# ROBOT_RADIUS = 0.26
 
 # Turtlebot3 Burge
 # WHEELS_DISTANCE = 0.16
 # WHEEL_RADIUS = 0.033
+# ROBOT_RADIUS = 0.1
+
+# epuck
+WHEELS_DISTANCE = 0.052
+WHEEL_RADIUS = 0.02
+ROBOT_RADIUS = 0.035
 
 
 class WebotsWorld():
@@ -20,7 +27,7 @@ class WebotsWorld():
         self.robot_name = 'Robot' + str(index)
         self.lidar_name = 'Lidar' + str(index)
 
-        self.robot_radius = 0.26
+        self.robot_radius = ROBOT_RADIUS
         self.pedestrian_radius = 0.3
 
         # os.environ['WEBOTS_ROBOT_NAME'] = self.robot_name
@@ -66,11 +73,11 @@ class WebotsWorld():
 
 
     def get_self_stateGT(self):
-        Quaternious = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
-        Euler = tf.transformations.euler_from_quaternion([Quaternious[1], Quaternious[2], Quaternious[3], Quaternious[0]])
+        angle = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
+        # Euler = tf.transformations.euler_from_quaternion([Quaternious[1], Quaternious[2], Quaternious[3], Quaternious[0]])
         # self.state_GT = [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef("Robot0").getPosition()[2], Euler[2]]
         # return self.state_GT
-        return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef(self.robot_name).getPosition()[2], Euler[2]]
+        return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef(self.robot_name).getPosition()[2], angle[3]]
 
     def get_self_speedGT(self):
         # self.speed_GT = [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
@@ -107,15 +114,11 @@ class WebotsWorld():
         v_right = self.rightMotor.getVelocity() * WHEEL_RADIUS
         return [(v_left + v_right) / 2, (v_right - v_left) / WHEELS_DISTANCE]
 
-    # def get_self_state(self):
-    #     Quaternious = self.robot.getFromDef(self.robot_name).getField("rotation").getSFRotation()
-    #     Euler = tf.transformations.euler_from_quaternion([Quaternious.x, Quaternious.y, Quaternious.z, Quaternious.w])
-    #     return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef("Robot0").getPosition()[2], Euler[2]]
 
     def get_crash_state(self, position,safe_distance=0.):
         # position = self.get_self_stateGT()
         other_robots_position = self.get_other_robots_position()
-        if abs(position[0])>9.5 or abs(position[1])>9.5:
+        if np.sqrt(position[0] ** 2 + position[1] ** 2) > 9:
             is_crashed = True
             return is_crashed
         for other in other_robots_position:
@@ -223,7 +226,7 @@ class WebotsWorld():
         [v, w] = self.get_self_speedGT()
         self.pre_distance = copy.deepcopy(self.distance)
         self.distance = np.sqrt((self.goal_point[0] - x) ** 2 + (self.goal_point[1] - y) ** 2)
-        reward_g = (self.pre_distance - self.distance) * 2.5  # reward shaping
+        reward_g = (self.pre_distance - self.distance) * 2.5 # reward shaping
         reward_c = 0
         reward_w = 0
         result = 0
@@ -296,8 +299,8 @@ class WebotsWorld():
         # pose_cmd.orientation.w = qtn[3]   # using quaternion to represent orientation
         # self.cmd_pose.publish(pose_cmd)
         self.robot.getFromDef(self.robot_name).getField("translation").setSFVec3f([pose[0], 0.0949247, pose[1]])
-        qtn = tf.transformations.quaternion_from_euler(0, 0, pose[2], 'rxyz')
-        self.robot.getFromDef(self.robot_name).getField("rotation").setSFRotation([qtn[3], qtn[0], qtn[1], qtn[2]])
+        # qtn = tf.transformations.quaternion_from_euler(0, 0, pose[2], 'rxyz')
+        self.robot.getFromDef(self.robot_name).getField("rotation").setSFRotation([0, 1, 0, pose[2]])
         # self.robot.step(1)
 
     def generate_random_pose(self):
@@ -312,7 +315,7 @@ class WebotsWorld():
             if not self.get_crash_state(try_position,safe_distance=0.5):
                 near_obstacle = False
             dis = np.sqrt(x ** 2 + y ** 2)
-            if dis<9:
+            if dis<4:
                 proper_origin = True
         theta = np.random.uniform(0, 2 * np.pi)
         #print(near_obstacle,'dis: ',dis)
@@ -330,11 +333,12 @@ class WebotsWorld():
             try_position = [np.random.uniform(-9, 9),np.random.uniform(-9, 9)]
             x = try_position[0]
             y = try_position[1]
-            if not self.get_crash_state(try_position,safe_distance=0.5):
+            if not self.get_crash_state(try_position,safe_distance=0.2):
                 near_obstacle = False
 
             dis_origin = np.sqrt(x ** 2 + y ** 2)
             dis_goal = np.sqrt((x - self.init_pose[0]) ** 2 + (y - self.init_pose[1]) ** 2)
+            # print(self.init_pose,x,y)
             if dis_origin < 9:
                 proper_origin = True
             if dis_goal < 10 and dis_goal > 8:

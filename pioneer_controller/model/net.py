@@ -143,14 +143,14 @@ class CNNPolicy(nn.Module):
 
         mean1 = torch.sigmoid(self.actor1(a)) # sigmoid
         mean2 = torch.tanh(self.actor2(a))  # size:[n,1]
-        mean = torch.cat((mean1, mean2), dim=-1)
+        mean = torch.cat((mean1 * -1, mean2 * -2), dim=-1)
 
         logstd = self.logstd.expand_as(mean) # size:[1,2]
         std = torch.exp(logstd)
         action = torch.normal(mean, std)
-
         # action prob on log scale
         logprob = log_normal_density(action, mean, std=std, log_std=logstd)
+        # print(action)
 
 
         v = F.leaky_relu(self.crt_fea_cv1(x))
