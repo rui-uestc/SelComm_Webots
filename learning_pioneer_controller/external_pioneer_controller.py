@@ -10,7 +10,6 @@ name = robot.getName()
 timestep = int(robot.getBasicTimeStep())  # ms, default = 32
 
 
-
 leftMotor = robot.getMotor('left wheel')
 rightMotor = robot.getMotor('right wheel')
 # leftMotor1 = robot.getMotor('front left wheel')
@@ -19,8 +18,8 @@ leftMotor.setPosition(float('inf'))
 rightMotor.setPosition(float('inf'))
 # leftMotor1.setPosition(float('inf'))
 # rightMotor1.setPosition(float('inf'))
-leftMotor.setVelocity(1) #1/0.0975
-rightMotor.setVelocity(0)
+leftMotor.setVelocity(1/0.0975) #1/0.0975
+rightMotor.setVelocity(1/0.0975)
 # leftMotor1.setVelocity(1) #1/0.0975
 # rightMotor1.setVelocity(1)
 
@@ -44,7 +43,8 @@ print(robot.step(100))
 while robot.step(100) != -1:
     info = lidar.getRangeImage()
     info = np.array(info)
-    print(info)
+    rotation = robot.getFromDef("Robot0").getField("rotation").getSFRotation()
+    print(rotation)
 
 #     if name=="Robot0":
 #         # print('ssss')

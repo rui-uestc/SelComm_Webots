@@ -12,8 +12,8 @@ print(name)
 
 
 
-leftMotor = robot.getMotor('left wheel motor')
-rightMotor = robot.getMotor('right wheel motor')
+leftMotor = robot.getMotor('left wheel')
+rightMotor = robot.getMotor('right wheel')
 leftMotor.setPosition(float('inf'))
 rightMotor.setPosition(float('inf'))
 leftMotor.setVelocity(5) #1/0.0975

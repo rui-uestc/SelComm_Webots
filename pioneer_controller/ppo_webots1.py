@@ -100,7 +100,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
 
         obs = env.get_laser_observation()
         obs_stack = deque([obs, obs, obs])  # transform to three channes
-        goal = np.asarray(env.get_local_goal())
+        goal = np.asarray(env.get_local_goal()) #@TODO BUG!!!!!!
         speed = np.asarray(env.get_self_speed())
         position = np.asarray(env.get_position())
         state = [obs_stack, goal, speed, position]
@@ -167,7 +167,8 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             Only robot whose rank==0 has the state_list which contains other's message. Messages in other robots is Nonef
             Robot 0 plays a role of central node.
             '''
-
+            # if env.index == 0:
+            #     print('ssssssssssssss',state_list[0][1:])
             v, a, logprob, scaled_action, all_attend_probs = generate_action(env=env, state_list=state_list,
                                                                              policy=policy, action_bound=action_bound)
             # print(all_attend_probs) #12*12 dig0 matrix   axis=1 means the weights
@@ -418,7 +419,7 @@ if __name__ == '__main__':
     env = WebotsWorld(512, index=rank, robot=robot, num_robot=sys_args.NumRobots, num_pedestrian=sys_args.NumPedestrians)
     reward = None
 
-    action_bound = [[-1, -1], [0, 1]]
+    action_bound = [[-1/2, -1/2], [0, 1/2]]
 
     # torch.manual_seed(1)
     # np.random.seed(1)

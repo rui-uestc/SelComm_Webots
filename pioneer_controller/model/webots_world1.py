@@ -4,9 +4,9 @@ import tf
 import numpy as np
 
 # Pioneer
-# WHEELS_DISTANCE = 0.33
-# WHEEL_RADIUS = 0.0975
-# ROBOT_RADIUS = 0.26
+WHEELS_DISTANCE = 0.33
+WHEEL_RADIUS = 0.0975
+ROBOT_RADIUS = 0.26
 
 # Turtlebot3 Burge
 # WHEELS_DISTANCE = 0.16
@@ -14,9 +14,9 @@ import numpy as np
 # ROBOT_RADIUS = 0.1
 
 # epuck
-WHEELS_DISTANCE = 0.052
-WHEEL_RADIUS = 0.02
-ROBOT_RADIUS = 0.035
+# WHEELS_DISTANCE = 0.052
+# WHEEL_RADIUS = 0.02
+# ROBOT_RADIUS = 0.035
 
 
 class WebotsWorld():
@@ -28,7 +28,7 @@ class WebotsWorld():
         self.lidar_name = 'Lidar' + str(index)
 
         self.robot_radius = ROBOT_RADIUS
-        self.pedestrian_radius = 0.3
+        self.pedestrian_radius = 0.15
 
         # os.environ['WEBOTS_ROBOT_NAME'] = self.robot_name
         self.robot = robot
@@ -77,7 +77,7 @@ class WebotsWorld():
         # Euler = tf.transformations.euler_from_quaternion([Quaternious[1], Quaternious[2], Quaternious[3], Quaternious[0]])
         # self.state_GT = [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef("Robot0").getPosition()[2], Euler[2]]
         # return self.state_GT
-        return [self.robot.getFromDef(self.robot_name).getPosition()[0],self.robot.getFromDef(self.robot_name).getPosition()[2], angle[3]]
+        return [self.robot.getFromDef(self.robot_name).getPosition()[2],self.robot.getFromDef(self.robot_name).getPosition()[0], angle[3]]
 
     def get_self_speedGT(self):
         # self.speed_GT = [self.leftMotor.getVelocity(), self.rightMotor.getVelocity()]
@@ -118,7 +118,7 @@ class WebotsWorld():
     def get_crash_state(self, position,safe_distance=0.):
         # position = self.get_self_stateGT()
         other_robots_position = self.get_other_robots_position()
-        if np.sqrt(position[0] ** 2 + position[1] ** 2) > 9:
+        if np.sqrt(position[0] ** 2 + position[1] ** 2) > 9.5: 
             is_crashed = True
             return is_crashed
         for other in other_robots_position:
@@ -134,7 +134,7 @@ class WebotsWorld():
         for other in pedestrian_position:
             dx = position[0] - other[0]
             dy = position[1] - other[1]
-            dist = (dx ** 2 + dy ** 2) ** (1 / 2) - self.robot_radius - self.robot_radius
+            dist = (dx ** 2 + dy ** 2) ** (1 / 2) - self.pedestrian_radius - self.robot_radius
             if dist < 0:
                 is_crashed = True
                 return is_crashed
@@ -149,7 +149,7 @@ class WebotsWorld():
             if i != self.index:
                 robots_name.append('Robot'+str(i))
         for robot in robots_name:
-            robots_position.append([self.robot.getFromDef(robot).getPosition()[0],self.robot.getFromDef(robot).getPosition()[2]])
+            robots_position.append([self.robot.getFromDef(robot).getPosition()[2],self.robot.getFromDef(robot).getPosition()[0]])
         return robots_position
 
     def get_pedestrians_position(self):
@@ -158,7 +158,7 @@ class WebotsWorld():
         for i in range(self.num_pedestrian):
             pedestrians_name.append('Pedestrian'+str(i))
         for pedestrian in pedestrians_name:
-            pedestrians_position.append([self.robot.getFromDef(pedestrian).getPosition()[0],self.robot.getFromDef(pedestrian).getPosition()[2]])
+            pedestrians_position.append([self.robot.getFromDef(pedestrian).getPosition()[2],self.robot.getFromDef(pedestrian).getPosition()[0]])
         return pedestrians_position
 
 
@@ -168,6 +168,9 @@ class WebotsWorld():
         [goal_x, goal_y] = self.goal_point
         local_x = (goal_x - x) * np.cos(theta) + (goal_y - y) * np.sin(theta)
         local_y = -(goal_x - x) * np.sin(theta) + (goal_y - y) * np.cos(theta)
+        # print('[x, y, theta]', [x, y, theta])
+        # print('[goal_x, goal_y]',[goal_x, goal_y])
+        # print('[local_x, local_y]',[local_x, local_y])
         return [local_x, local_y]
 
     def get_position(self):
@@ -187,7 +190,7 @@ class WebotsWorld():
             if not exisiting_goal is None:
                 exisiting_goal.remove()
             # print(goal)
-            x, z = goal
+            z, x = goal   # all x and y is bule and red,except this function
             goal_string = """
                     DEF GOAL_%d Shape{
                         appearance Appearance{
@@ -245,7 +248,7 @@ class WebotsWorld():
         if np.abs(w) >  1.05:
             reward_w = -0.1 * np.abs(w)
 
-        if t > 150:
+        if t > 170:
             terminate = True
             result = 'Time out'
         reward = reward_g + reward_c + reward_w
@@ -298,7 +301,7 @@ class WebotsWorld():
         # pose_cmd.orientation.z = qtn[2]
         # pose_cmd.orientation.w = qtn[3]   # using quaternion to represent orientation
         # self.cmd_pose.publish(pose_cmd)
-        self.robot.getFromDef(self.robot_name).getField("translation").setSFVec3f([pose[0], 0.0949247, pose[1]])
+        self.robot.getFromDef(self.robot_name).getField("translation").setSFVec3f([pose[1], 0.095, pose[0]])
         # qtn = tf.transformations.quaternion_from_euler(0, 0, pose[2], 'rxyz')
         self.robot.getFromDef(self.robot_name).getField("rotation").setSFRotation([0, 1, 0, pose[2]])
         # self.robot.step(1)
@@ -306,7 +309,7 @@ class WebotsWorld():
     def generate_random_pose(self):
         near_obstacle = True
         proper_origin = False
-        while(near_obstacle == True and proper_origin == False):
+        while(near_obstacle == True or proper_origin == False):
             near_obstacle = True
             proper_origin = False
             try_position = [np.random.uniform(-9, 9), np.random.uniform(-9, 9)]
@@ -315,10 +318,11 @@ class WebotsWorld():
             if not self.get_crash_state(try_position,safe_distance=0.5):
                 near_obstacle = False
             dis = np.sqrt(x ** 2 + y ** 2)
-            if dis<4:
+            if dis<9:
                 proper_origin = True
         theta = np.random.uniform(0, 2 * np.pi)
         #print(near_obstacle,'dis: ',dis)
+        # print('sssssssss',[x, y, theta])
         return [x, y, theta]
 
     def generate_random_goal(self):
@@ -333,7 +337,7 @@ class WebotsWorld():
             try_position = [np.random.uniform(-9, 9),np.random.uniform(-9, 9)]
             x = try_position[0]
             y = try_position[1]
-            if not self.get_crash_state(try_position,safe_distance=0.2):
+            if not self.get_crash_state(try_position,safe_distance=0.5):
                 near_obstacle = False
 
             dis_origin = np.sqrt(x ** 2 + y ** 2)
@@ -341,7 +345,7 @@ class WebotsWorld():
             # print(self.init_pose,x,y)
             if dis_origin < 9:
                 proper_origin = True
-            if dis_goal < 10 and dis_goal > 8:
+            if dis_goal < 6 and dis_goal > 5:
                 proper_goal = True
             # if near_obstacle is False and proper_goal is True and proper_origin is True:
             #     break

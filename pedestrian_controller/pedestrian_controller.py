@@ -33,7 +33,7 @@ class Pedestrian (Supervisor):
         self.speed = 1.15
         self.current_height_offset = 0
         self.joints_position_field = []
-        self.half_scenario_width = 10
+        self.half_scenario_width = 7
         self.joint_names = [
             "leftArmAngle", "leftLowerArmAngle", "leftHandAngle",
             "rightArmAngle", "rightLowerArmAngle", "rightHandAngle",
@@ -73,7 +73,7 @@ class Pedestrian (Supervisor):
             # print("The trajectory shoulld have at least 2 points.")
             # return
         # if options.speed and options.speed > 0:
-        self.speed = 0.2
+        self.speed = 0.1
         # print(self.speed)
         if options.step and options.step > 0:
             self.time_step = options.step

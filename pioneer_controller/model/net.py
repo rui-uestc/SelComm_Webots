@@ -143,7 +143,7 @@ class CNNPolicy(nn.Module):
 
         mean1 = torch.sigmoid(self.actor1(a)) # sigmoid
         mean2 = torch.tanh(self.actor2(a))  # size:[n,1]
-        mean = torch.cat((mean1 * -1, mean2 * -2), dim=-1)
+        mean = torch.cat((mean1 / -2.0, mean2 / -2.0), dim=-1)
 
         logstd = self.logstd.expand_as(mean) # size:[1,2]
         std = torch.exp(logstd)
