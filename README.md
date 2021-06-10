@@ -53,7 +53,7 @@ python run.py
 
 ## Video Demo
 
-|   A Success Case in Simple Scenarios    |
+|    An episode in the human scenario     |
 | :-------------------------------------: |
 | <img src="docs/demo.gif" width="500" /> |
 
