@@ -53,9 +53,9 @@ python run.py
 
 ## Video Demo
 
-|   A Success Case in Simple Scenarios   |
-| :------------------------------------: |
-| <img src="doc/demo.gif" width="500" /> |
+|   A Success Case in Simple Scenarios    |
+| :-------------------------------------: |
+| <img src="docs/demo.gif" width="500" /> |
 
 ## References
 
