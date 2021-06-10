@@ -271,10 +271,10 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
                     memory = (
                     s_batch, goal_batch, speed_batch, position_batch, adj_batch, a_batch, l_batch, t_batch, v_batch,
                     r_batch, advs_batch, next_q_batch, d_batch)
-                    # ppo_update_stage1(policy=policy, optimizer=optimizer, batch_size=BATCH_SIZE, memory=memory,
-                    #                   epoch=EPOCH, coeff_entropy=COEFF_ENTROPY, clip_value=CLIP_VALUE, num_step=HORIZON,
-                    #                   num_env=NUM_ENV, frames=LASER_HIST,
-                    #                   obs_size=OBS_SIZE, act_size=ACT_SIZE, global_update=global_update)
+                    ppo_update_stage1(policy=policy, optimizer=optimizer, batch_size=BATCH_SIZE, memory=memory,
+                                      epoch=EPOCH, coeff_entropy=COEFF_ENTROPY, clip_value=CLIP_VALUE, num_step=HORIZON,
+                                      num_env=NUM_ENV, frames=LASER_HIST,
+                                      obs_size=OBS_SIZE, act_size=ACT_SIZE, global_update=global_update)
                     is_update = True
 
                     buff = []
@@ -283,8 +283,8 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
                     s_batch, goal_batch, speed_batch, position_batch, adj_batch, a_batch, r_batch, d_batch, l_batch, v_batch, next_q_batch = \
                         transform_buffer(buff=dqn_buff)
                     dqn_memory = (s_batch, goal_batch, speed_batch, position_batch, r_batch, next_q_batch, d_batch)
-                    # dqn_update1(selector=selector, selector_optimizer=selector_optimizer, mse_selector=mse_selector,
-                    #             batch_size=BATCH_SIZE, memory=dqn_memory)
+                    dqn_update1(selector=selector, selector_optimizer=selector_optimizer, mse_selector=mse_selector,
+                                batch_size=BATCH_SIZE, memory=dqn_memory)
                     dvn_update_count += 1
                     if dvn_update_count % V_NETWORK_ITERATION == 0:
                         target_selector.load_state_dict(selector.state_dict())
@@ -296,20 +296,20 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
 
             if step % STAY_SELECTOR == 0:
                 dqn_reward = 0
-        #
-        # if env.index == 0:
-        #     if global_update != 0 and global_update % 20 == 0:
-        #         torch.save(policy.state_dict(), policy_path + '/{}.pth'.format(time.time()))
-        #         if mode is 'dqn':
-        #             torch.save(selector.state_dict(), policy_path + '/dqn_{}.pth'.format(time.time()))
-        #
-        #         torch.save(policy.state_dict(), policy_path + '/best.pth')
-        #         if mode is 'dqn':
-        #             torch.save(selector.state_dict(), policy_path + '/dqn_best.pth')
-        #         logger.info('########################## model saved when update {} times#########'
-        #                     '################'.format(global_update))
-        #
-        #         return2 = command2.terminate()
+        
+        if env.index == 0:
+            if global_update != 0 and global_update % 20 == 0:
+                torch.save(policy.state_dict(), policy_path + '/{}.pth'.format(time.time()))
+                if mode is 'dqn':
+                    torch.save(selector.state_dict(), policy_path + '/dqn_{}.pth'.format(time.time()))
+        
+                torch.save(policy.state_dict(), policy_path + '/best.pth')
+                if mode is 'dqn':
+                    torch.save(selector.state_dict(), policy_path + '/dqn_best.pth')
+                logger.info('########################## model saved when update {} times#########'
+                            '################'.format(global_update))
+        
+                return2 = command2.terminate()
 
         drift = np.sqrt((env.goal_point[0] - env.init_pose[0]) ** 2 + (env.goal_point[1] - env.init_pose[1]) ** 2)
 
