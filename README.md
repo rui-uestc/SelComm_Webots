@@ -40,7 +40,7 @@ source devel/setup.bash
 
 ## How to train
 
-Open the file named 6robots_360lidar_pedestrian.wbt with Webots, and close Webots.
+Open the file named 6robots_360lidar_pedestrian.wbt with Webots, and then close Webots.
 
 To train the human-crowd scenario, running the following command::
 
