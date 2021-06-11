@@ -40,11 +40,10 @@ source devel/setup.bash
 
 ## How to train
 
-Open the file named 6robots_360lidar_pedestrian.wbt with Webots.
-
 Run the following command::
 
 ```
+webots 6robots_360lidar_pedestrian.wbt
 cd ./pioneer_controller
 python run.py
 ```
