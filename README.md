@@ -52,7 +52,7 @@ python run.py
 
 ## Video Demo
 
-|       Test in the human scenario        |
+|    Test in the human-crowd scenario     |
 | :-------------------------------------: |
 | <img src="docs/demo.gif" width="500" /> |
 
