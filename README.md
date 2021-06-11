@@ -52,7 +52,7 @@ python run.py
 
 ## Video Demo
 
-|    An episode in the human scenario     |
+|       Test in the human scenario        |
 | :-------------------------------------: |
 | <img src="docs/demo.gif" width="500" /> |
 
