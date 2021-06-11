@@ -52,9 +52,13 @@ python run.py
 
 ## Video Demo
 
-|    Test in the human-crowd scenario     |
+|             The global view             |
 | :-------------------------------------: |
 | <img src="docs/demo.gif" width="500" /> |
+
+|        The local view        |
+| :--------------------------: |
+| ![local_1](docs/local_1.gif) |
 
 ## References
 
