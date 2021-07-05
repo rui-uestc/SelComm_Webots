@@ -20,21 +20,7 @@ This is the implementation based on Webots. For Stage_ROS version, please refer 
 
 ## Setup
 
-- #### Use Python3 and tf in ROS
-
-```shell
-sudo apt-get install python3-dev 
-mkdir -p catkin_ws_py3/src
-cd catkin_ws_py3/src  
-git clone https://github.com/ros/geometry 
-git clone https://github.com/ros/geometry2 
-cd .. 
-virtualenv -p /usr/bin/python3 venv 
-source venv/bin/activate 
-pip install catkin_pkg pyyaml empy rospkg numpy 
-catkin_make --cmake-args -DPYTHON_VERSION=3.6
-source devel/setup.bash
-```
+Set up your Pycharm according to https://cyberbotics.com/doc/guide/using-your-ide?tab-language=python#pycharm.
 
 
 
