@@ -43,8 +43,8 @@ source devel/setup.bash
 Run the following command::
 
 ```
-webots 6robots_360lidar_pedestrian.wbt
-cd ./pioneer_controller
+webots worlds/6robots_360lidar_pedestrian.wbt
+cd ./controllers/pioneer_controller/
 python run.py
 ```
 
