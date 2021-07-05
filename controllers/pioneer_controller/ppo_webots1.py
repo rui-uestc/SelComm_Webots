@@ -7,7 +7,6 @@ import traceback
 
 import numpy as np
 import random
-import rospy
 import torch
 import torch.nn as nn
 from mpi4py import MPI
@@ -73,7 +72,6 @@ STAY_SELECTOR = 5  # 5
 
 def run(comm, env, policy, policy_path, action_bound, optimizer,
         selector, target_selector, selector_optimizer, mse_selector, mode):
-    # rate = rospy.Rate(5)
     buff = []
     dqn_buff = deque()
     global_update = 0
@@ -177,7 +175,7 @@ def run(comm, env, policy, policy_path, action_bound, optimizer,
             # print(real_action)
             env.control_vel(real_action)
             # rate.sleep()
-            rospy.sleep(0.001)
+            time.sleep(0.001)
 
             # get informtion
             r, terminal, result = env.get_reward_and_terminate(step)
