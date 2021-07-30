@@ -1,6 +1,6 @@
 # SelComm_Webots
 
-This repository contains the codes for our paper, which is in submission to RA-L and IROS 2021.
+This repository contains the codes for our paper, which has been accepted by RA-L and IROS 2021.
 
 This is the implementation based on Webots. For Stage_ROS version, please refer to another [repository](https://github.com/George-Chia/SelComm_Stage).
 
